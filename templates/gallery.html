@@ -3,16 +3,58 @@
 <head>
   <meta charset="UTF-8">
   <title>Gallery</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    h1 {
+      text-align: center;
+    }
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 15px;
+      justify-items: center;
+    }
+    .photo {
+      border: 1px solid #ccc;
+      padding: 10px;
+      border-radius: 8px;
+      text-align: center;
+      background-color: #f9f9f9;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .photo img {
+      width: 100%;
+      height: auto;
+      border-radius: 5px;
+      object-fit: cover;
+    }
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-bottom: 20px;
+      font-weight: bold;
+      text-decoration: none;
+      color: #333;
+    }
+    .back-link:hover {
+      color: #007BFF;
+    }
+  </style>
 </head>
 <body>
   <h1>Gallery</h1>
-  <p><a href="/">Back to Upload</a></p>
+  <a class="back-link" href="/">&#8592; Back to Upload</a>
 
-  {% for file in files %}
-      <div style="margin:10px; display:inline-block;">
-          <img src="/file/{{ file.id }}" alt="{{ file.filename }}" width="200"><br>
-          <small>{{ file.filename }}</small>
+  <div class="gallery">
+    {% for file in files %}
+      <div class="photo">
+        <img src="/file/{{ file.id }}" alt="{{ file.filename }}">
+        <small>{{ file.filename }}</small>
       </div>
-  {% endfor %}
+    {% endfor %}
+  </div>
 </body>
 </html>
