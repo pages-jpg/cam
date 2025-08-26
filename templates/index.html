@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Camera App</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: #fff; /* white background */
+      font-family: sans-serif;
+    }
+
+    /* Camera preview */
+    #camera {
+      width: 90%;
+      max-width: 500px;
+      height: 65vh; /* taller to show full preview */
+      object-fit: cover;
+      border: 2px solid #ccc;
+      border-radius: 12px;
+      background: #000;
+      display: block;
+    }
+
+    /* Controls bar */
+    .controls {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* Capture button styled like real camera */
+    #captureBtn {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: white;
+      border: 6px solid #444;
+      cursor: pointer;
+      position: relative;
+    }
+
+    /* Outer ring */
+    #captureBtn::after {
+      content: "";
+      position: absolute;
+      top: -12px;
+      left: -12px;
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      border: 4px solid #aaa;
+    }
+
+    /* Preview image after capture */
+    #preview img {
+      display: block;
+      margin: 20px auto;
+      max-width: 90%;
+      max-height: 60vh;
+      border-radius: 12px;
+      border: 2px solid #444;
+      object-fit: contain;
+    }
+  </style>
+</head>
+<body>
+  <!-- Live Camera -->
+  <video id="camera" autoplay playsinline></video>
+
+  <!-- Capture Button -->
+  <div class="controls">
+    <button id="captureBtn"></button>
+  </div>
+
+  <!-- Hidden canvas for snapshot -->
+  <canvas id="canvas" style="display:none;"></canvas>
+
+  <!-- Preview after capture -->
+  <div id="preview"></div>
+
+  <script>
+    const video = document.getElementById('camera');
+    const canvas = document.getElementById('canvas');
+    const preview = document.getElementById('preview');
+    const captureBtn = document.getElementById('captureBtn');
+
+    // Start the camera
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+      .then(stream => {
+        video.srcObject = stream;
+      })
+      .catch(err => {
+        alert("Camera access denied: " + err);
+      });
+
+    // Capture and upload
+    captureBtn.addEventListener('click', () => {
+      const context = canvas.getContext('2d');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      // Show preview
+      const img = document.createElement("img");
+      img.src = canvas.toDataURL("image/png");
+      preview.innerHTML = "";
+      preview.appendChild(img);
+
+      // Upload to backend
+      canvas.toBlob(blob => {
+        const formData = new FormData();
+        formData.append("photo", blob, "capture.png");
+
+        fetch("/upload", {
+          method: "POST",
+          body: formData
+        })
+        .then(res => {
+          if (res.redirected) {
+            window.location.href = res.url; // go to uploaded photo
+          }
+        });
+      }, "image/png");
+    });
+  </script>
+</body>
+</html>
