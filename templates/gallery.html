@@ -24,12 +24,26 @@
       text-align: center;
       background-color: #f9f9f9;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      position: relative;
     }
     .photo img {
       width: 100%;
       height: auto;
       border-radius: 5px;
       object-fit: cover;
+    }
+    .delete-btn {
+      margin-top: 5px;
+      padding: 5px 10px;
+      font-size: 14px;
+      color: #fff;
+      background-color: #FF4B5C;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .delete-btn:hover {
+      background-color: #e63946;
     }
     .back-link {
       display: block;
@@ -53,6 +67,9 @@
       <div class="photo">
         <img src="/file/{{ file.id }}" alt="{{ file.filename }}">
         <small>{{ file.filename }}</small>
+        <form method="POST" action="/delete/{{ file.id }}">
+          <button type="submit" class="delete-btn">Delete</button>
+        </form>
       </div>
     {% endfor %}
   </div>
