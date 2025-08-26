@@ -26,7 +26,7 @@ with app.app_context():
 
 @app.route("/")
 def index():
-    return "✅ Backend is running. Go to /gallery to see uploaded photos."
+    return render_template("index.html")
 
 @app.route("/upload", methods=["POST"])
 def upload_file():
@@ -60,3 +60,4 @@ def gallery():
     {% endfor %}
     """
     return render_template_string(html, files=files)
+
