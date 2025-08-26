@@ -46,6 +46,14 @@ def upload_file():
     # Redirect to gallery after upload
     return redirect(url_for("gallery"))
 
+@app.route("/delete/<int:file_id>", methods=["POST"])
+def delete_file(file_id):
+    file = UploadedFile.query.get_or_404(file_id)
+    db.session.delete(file)
+    db.session.commit()
+    return redirect("/gallery")
+
+
 # Serve individual file by ID
 @app.route("/file/<int:file_id>")
 def get_file(file_id):
@@ -57,3 +65,4 @@ def get_file(file_id):
 def gallery():
     files = UploadedFile.query.all()
     return render_template("gallery.html", files=files)
+
