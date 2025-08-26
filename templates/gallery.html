@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Gallery</title>
+  <style>
+    body {
+      background: #fff;
+      font-family: sans-serif;
+      text-align: center;
+    }
+    h1 {
+      margin: 20px 0;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 15px;
+      padding: 20px;
+    }
+    .grid img {
+      width: 100%;
+      border-radius: 10px;
+      border: 2px solid #ccc;
+      object-fit: cover;
+    }
+    .back-btn {
+      display: inline-block;
+      margin: 15px;
+      padding: 10px 15px;
+      font-size: 14px;
+      border: none;
+      border-radius: 6px;
+      background: #007bff;
+      color: white;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>📸 My Gallery</h1>
+  <a class="back-btn" href="/">⬅ Back to Camera</a>
+  <div class="grid">
+    {% for img in images %}
+      <img src="{{ img }}" alt="photo">
+    {% endfor %}
+  </div>
+</body>
+</html>
