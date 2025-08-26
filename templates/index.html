@@ -34,9 +34,16 @@
     }
 
     document.getElementById("flipBtn").addEventListener("click", () => {
-      currentFacingMode = currentFacingMode === "environment" ? "user" : "environment";
-      startCamera();
-    });
+  currentFacingMode = currentFacingMode === "environment" ? "user" : "environment";
+
+  // Stop previous stream tracks
+  if (video.srcObject) {
+    video.srcObject.getTracks().forEach(track => track.stop());
+  }
+
+  startCamera();
+});
+
 
     document.getElementById("captureBtn").addEventListener("click", async () => {
       canvas.width = video.videoWidth;
@@ -59,4 +66,5 @@
   </script>
 </body>
 </html>
+
 
