@@ -1,42 +1,64 @@
 import os
-from flask import Flask, render_template, request, redirect, send_from_directory
+from flask import Flask, request, render_template_string, send_file
+from flask_sqlalchemy import SQLAlchemy
+from io import BytesIO
 
 app = Flask(__name__)
 
-UPLOAD_FOLDER = "uploads"
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+# Connect to PostgreSQL (DATABASE_URL must be set in Render Environment Variables)
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL")
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+db = SQLAlchemy(app)
+
+# Model for storing files in database
+class UploadedFile(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    filename = db.Column(db.String(200), nullable=False)
+    data = db.Column(db.LargeBinary, nullable=False)   # binary file data
+    mimetype = db.Column(db.String(100), nullable=False)
+
+with app.app_context():
+    db.create_all()
+
+# Home
 @app.route("/")
-def home():
-    return render_template("index.html")
+def index():
+    return "✅ Backend is running. Go to /gallery to see uploaded photos."
 
+# Upload route
 @app.route("/upload", methods=["POST"])
-def upload():
-    if "photo" not in request.files:
-        return "No file uploaded", 400
+def upload_file():
+    if "file" not in request.files:
+        return {"error": "No file uploaded"}, 400
+    file = request.files["file"]
+    new_file = UploadedFile(
+        filename=file.filename,
+        data=file.read(),
+        mimetype=file.mimetype
+    )
+    db.session.add(new_file)
+    db.session.commit()
+    return {"message": f"{file.filename} uploaded successfully!"}
 
-    photo = request.files["photo"]
-    if photo.filename == "":
-        return "No selected file", 400
+# Serve individual file
+@app.route("/file/<int:file_id>")
+def get_file(file_id):
+    file = UploadedFile.query.get_or_404(file_id)
+    return send_file(BytesIO(file.data), mimetype=file.mimetype, download_name=file.filename)
 
-    filepath = os.path.join(app.config["UPLOAD_FOLDER"], photo.filename)
-    photo.save(filepath)
-
-    # After upload → redirect to gallery
-    return redirect("/gallery")
-
-@app.route("/uploads/<filename>")
-def uploaded_file(filename):
-    return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
-
+# Gallery page
 @app.route("/gallery")
 def gallery():
-    files = os.listdir(app.config["UPLOAD_FOLDER"])
-    # Only images
-    image_files = [f for f in files if f.lower().endswith((".png", ".jpg", ".jpeg"))]
-    image_urls = [f"/uploads/{f}" for f in image_files]
-    return render_template("gallery.html", images=image_urls)
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    files = UploadedFile.query.all()
+    # Simple HTML gallery
+    html = """
+    <h1>Gallery</h1>
+    {% for file in files %}
+        <div style="margin:10px; display:inline-block;">
+            <img src="/file/{{ file.id }}" alt="{{ file.filename }}" width="200"><br>
+            <small>{{ file.filename }}</small>
+        </div>
+    {% endfor %}
+    """
+    return render_template_string(html, files=files)
