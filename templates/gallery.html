@@ -4,23 +4,54 @@
 <meta charset="UTF-8">
 <title>Gallery</title>
 <style>
-  .photo { display:inline-block; margin:10px; text-align:center; }
-  .photo img { width:200px; height:auto; border-radius:5px; }
-  .delete-btn { margin-top:5px; padding:5px; background:red; color:white; border:none; }
+  body { font-family: Arial; text-align:center; margin:20px; }
+  .gallery { display: none; grid-template-columns: repeat(auto-fill, 200px); gap:10px; justify-content:center; }
+  .photo { margin:10px; display:inline-block; border:1px solid #ccc; padding:5px; border-radius:5px; }
+  input { padding:10px; width:150px; }
+  button { padding:10px 15px; }
 </style>
 </head>
 <body>
-<h1>Gallery</h1>
-<a href="/">&#8592; Back to Upload</a>
-<br><br>
-{% for filename in files %}
-<div class="photo">
-  <img src="/file/{{ filename }}" alt="{{ filename }}">
-  <br>{{ filename }}
-  <form method="POST" action="/delete/{{ filename }}">
-    <button type="submit" class="delete-btn">Delete</button>
-  </form>
+<h1>Gallery Login</h1>
+<div id="login-container">
+  <input type="password" id="passkey" placeholder="Enter Passkey">
+  <button id="loginBtn">Login</button>
+  <p id="error-msg" style="color:red;"></p>
 </div>
-{% endfor %}
+
+<div class="gallery" id="gallery">
+  <a href="/">&#8592; Back to Upload</a>
+  {% for file in files %}
+  <div class="photo">
+    <img src="/file/{{ file.id }}" alt="{{ file.filename }}" width="200"><br>
+    <small>{{ file.filename }}</small>
+    <form method="POST" action="/delete/{{ file.id }}">
+      <button type="submit">Delete</button>
+    </form>
+  </div>
+  {% endfor %}
+</div>
+
+<script>
+const correctPass = "{{ PASSKEY }}";
+const loginBtn = document.getElementById("loginBtn");
+const passInput = document.getElementById("passkey");
+const galleryDiv = document.getElementById("gallery");
+const loginContainer = document.getElementById("login-container");
+const errorMsg = document.getElementById("error-msg");
+
+loginBtn.addEventListener("click", () => {
+  if(passInput.value === correctPass){
+    loginContainer.style.display = "none";
+    galleryDiv.style.display = "grid";
+  } else {
+    errorMsg.textContent = "Incorrect Passkey!";
+  }
+});
+
+passInput.addEventListener("keypress", (e) => {
+  if(e.key === "Enter") loginBtn.click();
+});
+</script>
 </body>
 </html>
