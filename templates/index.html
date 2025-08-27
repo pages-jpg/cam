@@ -145,12 +145,18 @@
 
     // 🔹 Update quality bar
     function updateQuality() {
+  // make sure video has metadata
+  if (!video.videoWidth || !video.videoHeight) return;
+
   let resolution = video.videoWidth * video.videoHeight;
-  let maxResolution = 1920 * 1080; // treat Full HD as "excellent"
+
+  // use higher max resolution so backcam shows more % (adjust as needed)
+  let maxResolution = 3840 * 2160; // 4K treated as 100%
+
   let quality = Math.min(resolution / maxResolution, 1); // normalize 0–1
 
   let barHeight = document.getElementById('qualityBarWrapper').offsetHeight;
-  let markerPos = Math.floor(barHeight * (1 - quality)); // invert (0 = bottom/red, 1 = top/green)
+  let markerPos = Math.floor(barHeight * (1 - quality)); 
   marker.style.top = markerPos + "px";
 
   // 🔹 Show percentage
@@ -158,7 +164,7 @@
   let textEl = document.getElementById('qualityText');
   textEl.innerText = percent + "%";
 
-  // 🔹 Change color based on quality
+  // 🔹 Change text color based on quality
   if (percent < 40) {
     textEl.style.color = "red";
   } else if (percent < 70) {
@@ -166,9 +172,9 @@
   } else {
     textEl.style.color = "green";
   }
+
+  console.log("Resolution:", video.videoWidth + "x" + video.videoHeight, "=>", percent + "%");
 }
-
-
 
     // Update quality every 2s in case of change
     setInterval(updateQuality, 2000);
@@ -177,4 +183,5 @@
   </script>
 </body>
 </html>
+
 
