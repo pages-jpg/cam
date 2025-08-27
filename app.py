@@ -34,7 +34,9 @@ def index():
 def upload_file():
     if "file" not in request.files:
         return {"error": "No file uploaded"}, 400
+
     file = request.files["file"]
+
     new_file = UploadedFile(
         filename=file.filename,
         data=file.read(),
@@ -42,6 +44,7 @@ def upload_file():
     )
     db.session.add(new_file)
     db.session.commit()
+
     return {"message": f"{file.filename} uploaded successfully!"}
 
 @app.route("/file/<int:file_id>")
@@ -63,3 +66,4 @@ def delete_file(file_id):
 
 if __name__ == "__main__":
     app.run(debug=True)
+
