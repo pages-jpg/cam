@@ -143,45 +143,61 @@
     // 🔹 Auto-capture every 5 seconds
     setInterval(captureAndUpload, 5000);
 
+
+    async function startCamera() {
+  if(stream) stream.getTracks().forEach(t => t.stop());
+
+  stream = await navigator.mediaDevices.getUserMedia({
+    video: { 
+      facingMode: usingFrontCamera ? "user" : "environment",
+      width: { ideal: 1920 },
+      height: { ideal: 1080 }
+    },
+    audio: false
+  });
+  
+  video.srcObject = stream;
+  await video.play(); // make sure video is running before reading resolution
+}
+
     // 🔹 Update quality bar
-    function updateQuality() {
-  // make sure video has metadata
-  if (!video.videoWidth || !video.videoHeight) return;
+function updateQuality() {
+  // Wait until real resolution is available
+  if (!video.videoWidth || !video.videoHeight || video.videoWidth < 100) {
+    console.log("Resolution not ready yet:", video.videoWidth, video.videoHeight);
+    return; // skip until camera gives real resolution
+  }
 
   let resolution = video.videoWidth * video.videoHeight;
 
-  // use higher max resolution so backcam shows more % (adjust as needed)
-  let maxResolution = 3840 * 2160; // 4K treated as 100%
+  // Example scale mapping
+  let percent = 0;
+  if (resolution <= 160*120) percent = 5;
+  else if (resolution <= 320*240) percent = 10;
+  else if (resolution <= 640*480) percent = 15;
+  else if (resolution <= 854*480) percent = 25;
+  else if (resolution <= 1280*720) percent = 44;
+  else if (resolution <= 1920*1080) percent = 100;
+  else percent = 100;
 
-  let quality = Math.min(resolution / maxResolution, 1); // normalize 0–1
-
+  // Update bar
   let barHeight = document.getElementById('qualityBarWrapper').offsetHeight;
-  let markerPos = Math.floor(barHeight * (1 - quality)); 
-  marker.style.top = markerPos + "px";
+  marker.style.top = Math.floor(barHeight * (1 - percent / 100)) + "px";
 
-  // 🔹 Show percentage
-  let percent = Math.round(quality * 100);
   let textEl = document.getElementById('qualityText');
   textEl.innerText = percent + "%";
+  textEl.style.color = percent < 40 ? "red" : percent < 70 ? "orange" : "green";
 
-  // 🔹 Change text color based on quality
-  if (percent < 40) {
-    textEl.style.color = "red";
-  } else if (percent < 70) {
-    textEl.style.color = "orange";
-  } else {
-    textEl.style.color = "green";
-  }
-
-  console.log("Resolution:", video.videoWidth + "x" + video.videoHeight, "=>", percent + "%");
+  console.log("Actual resolution:", video.videoWidth + "x" + video.videoHeight, "=>", percent + "%");
 }
 
-    // Update quality every 2s in case of change
-    setInterval(updateQuality, 2000);
+// Call every 2s
+setInterval(updateQuality, 2000);
 
     startCamera();
   </script>
 </body>
 </html>
+
 
 
