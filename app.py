@@ -40,7 +40,7 @@ def login_required(f):
 # Home page
 @app.route("/")
 def index():
-    return "<h1>Home</h1><a href='/gallery'>Go to Gallery</a>"
+     return render_template("index.html")
 
 # Upload route
 @app.route("/upload", methods=["POST"])
@@ -90,3 +90,4 @@ def delete_file(file_id):
 
 if __name__ == "__main__":
     app.run(debug=True)
+
