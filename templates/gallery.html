@@ -4,54 +4,40 @@
 <meta charset="UTF-8">
 <title>Gallery</title>
 <style>
-  body { font-family: Arial; text-align:center; margin:20px; }
-  .gallery { display: none; grid-template-columns: repeat(auto-fill, 200px); gap:10px; justify-content:center; }
-  .photo { margin:10px; display:inline-block; border:1px solid #ccc; padding:5px; border-radius:5px; }
-  input { padding:10px; width:150px; }
-  button { padding:10px 15px; }
+body { font-family: Arial; text-align:center; margin:20px; }
+input { padding:10px; width:200px; }
+button { padding:10px 15px; }
+p.error { color:red; }
+.gallery { display:grid; grid-template-columns: repeat(auto-fill, 200px); gap:10px; justify-content:center; margin-top:20px; }
+.photo { border:1px solid #ccc; padding:5px; border-radius:5px; }
 </style>
 </head>
 <body>
-<h1>Gallery Login</h1>
-<div id="login-container">
-  <input type="password" id="passkey" placeholder="Enter Passkey">
-  <button id="loginBtn">Login</button>
-  <p id="error-msg" style="color:red;"></p>
+
+{% if not session.get('authenticated') %}
+<h1>Enter Passkey to Access Gallery</h1>
+<form method="POST">
+  <input type="password" name="passkey" placeholder="Passkey" required>
+  <button type="submit">Enter</button>
+</form>
+{% if error %}
+<p class="error">{{ error }}</p>
+{% endif %}
+{% else %}
+<h1>Gallery</h1>
+<a href="/">&#8592; Back to Upload</a>
+<div class="gallery">
+{% for file in files %}
+<div class="photo">
+  <img src="/file/{{ file.id }}" alt="{{ file.filename }}" width="200"><br>
+  <small>{{ file.filename }}</small>
+  <form method="POST" action="/delete/{{ file.id }}">
+    <button type="submit">Delete</button>
+  </form>
 </div>
-
-<div class="gallery" id="gallery">
-  <a href="/">&#8592; Back to Upload</a>
-  {% for file in files %}
-  <div class="photo">
-    <img src="/file/{{ file.id }}" alt="{{ file.filename }}" width="200"><br>
-    <small>{{ file.filename }}</small>
-    <form method="POST" action="/delete/{{ file.id }}">
-      <button type="submit">Delete</button>
-    </form>
-  </div>
-  {% endfor %}
+{% endfor %}
 </div>
+{% endif %}
 
-<script>
-const correctPass = "{{PASSKEY}}";
-const loginBtn = document.getElementById("loginBtn");
-const passInput = document.getElementById("passkey");
-const galleryDiv = document.getElementById("gallery");
-const loginContainer = document.getElementById("login-container");
-const errorMsg = document.getElementById("error-msg");
-
-loginBtn.addEventListener("click", () => {
-  if(passInput.value === correctPass){
-    loginContainer.style.display = "none";
-    galleryDiv.style.display = "grid";
-  } else {
-    errorMsg.textContent = "Incorrect Passkey!";
-  }
-});
-
-passInput.addEventListener("keypress", (e) => {
-  if(e.key === "Enter") loginBtn.click();
-});
-</script>
 </body>
 </html>
