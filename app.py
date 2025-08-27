@@ -79,6 +79,18 @@ def gallery():
     files = UploadedFile.query.all()
     return render_template("gallery.html", files=files, error=None)
 
+@app.route("/delete-multiple", methods=["POST"])
+@login_required
+def delete_multiple():
+    ids = request.form.getlist("file_ids")
+    for fid in ids:
+        file = UploadedFile.query.get(fid)
+        if file:
+            db.session.delete(file)
+    db.session.commit()
+    return redirect("/gallery")
+
+
 # Delete file
 @app.route("/delete/<int:file_id>", methods=["POST"])
 @login_required
@@ -90,4 +102,5 @@ def delete_file(file_id):
 
 if __name__ == "__main__":
     app.run(debug=True)
+
 
