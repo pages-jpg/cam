@@ -35,44 +35,43 @@
       transition: top 0.5s ease;
     }
     #qualityText {
-  position: fixed;
-  top: 50%;
-  right: 60px;   /* push away from bar */
-  transform: translateY(-50%);
-  font-size: 26px;
-  font-weight: bold;
-}
+      position: fixed;
+      top: 50%;
+      right: 60px;   /* push away from bar */
+      transform: translateY(-50%);
+      font-size: 26px;
+      font-weight: bold;
+    }
 
     @media  (max-width: 1180px) {
       #qualityBarWrapper {
-      position: fixed;
-      top: 30%;
-      right: 25px;
-      transform: translateY(-50%);
-      width: 30px;
-      height: 50%;
-      background: linear-gradient(to top, red, yellow, green);
-      border-radius: 10px;
-      border: 1px solid #333;
-      overflow: hidden;
-    }
-    #qualityMarker {
-      position: absolute;
-      left: -4px;
-      width: 38px;
-      height: 2px;
-      background: black;
-      transition: top 0.5s ease;
-    }
-    #qualityText {
-  position: fixed;
-  top: 58%;
-  right: 20px;   /* push away from bar */
-  transform: translateY(-50%);
-  font-size: 50px;
-  font-weight: bold;
-}
-
+        position: fixed;
+        top: 30%;
+        right: 25px;
+        transform: translateY(-50%);
+        width: 30px;
+        height: 50%;
+        background: linear-gradient(to top, red, yellow, green);
+        border-radius: 10px;
+        border: 1px solid #333;
+        overflow: hidden;
+      }
+      #qualityMarker {
+        position: absolute;
+        left: -4px;
+        width: 38px;
+        height: 2px;
+        background: black;
+        transition: top 0.5s ease;
+      }
+      #qualityText {
+        position: fixed;
+        top: 58%;
+        right: 20px;   /* push away from bar */
+        transform: translateY(-50%);
+        font-size: 50px;
+        font-weight: bold;
+      }
     }
   </style>
 </head>
@@ -85,32 +84,43 @@
   </div>
   <div id="qualityText">0%</div>
 
-
-  <video id="video" autoplay playsinline></video>
+  <video id="video" autoplay playsinline muted></video>
   <br>
   <button id="flipBtn">Flip Camera</button>
   <button id="captureBtn">Capture</button>
   <canvas id="canvas" style="display:none;"></canvas>
 
   <script>
-    let video = document.getElementById('video');
-    let canvas = document.getElementById('canvas');
-    let captureBtn = document.getElementById('captureBtn');
-    let flipBtn = document.getElementById('flipBtn');
-    let marker = document.getElementById('qualityMarker');
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const captureBtn = document.getElementById('captureBtn');
+    const flipBtn = document.getElementById('flipBtn');
+    const marker = document.getElementById('qualityMarker');
+    const textEl = document.getElementById('qualityText');
+
     let stream;
     let usingFrontCamera = true;
 
+    // Start camera with cross-browser support
     async function startCamera() {
-      if(stream) stream.getTracks().forEach(track => track.stop());
-      stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: usingFrontCamera ? 'user' : 'environment' },
-        audio: false
-      });
-      video.srcObject = stream;
+      if(stream) stream.getTracks().forEach(t => t.stop());
 
-      // Check quality once video starts
-      video.onloadedmetadata = () => updateQuality();
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: usingFrontCamera ? 'user' : 'environment',
+            width: { ideal: 1920 },
+            height: { ideal: 1080 }
+          },
+          audio: false
+        });
+
+        video.srcObject = stream;
+        await video.play(); // ensures Safari & other browsers show preview
+      } catch (err) {
+        console.error("Camera error:", err);
+        alert("Cannot access camera. Use HTTPS and allow camera permissions.");
+      }
     }
 
     flipBtn.addEventListener('click', () => {
@@ -118,86 +128,75 @@
       startCamera();
     });
 
+    // Capture & upload
     function captureAndUpload() {
-      let context = canvas.getContext('2d');
+      const ctx = canvas.getContext('2d');
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
-      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
       canvas.toBlob(async (blob) => {
-        let formData = new FormData();
+        const formData = new FormData();
         formData.append('file', blob, 'photo.png');
-
         try {
-          let response = await fetch('/upload', { method: 'POST', body: formData });
-          if(response.ok) console.log('Photo uploaded successfully!');
-          else console.error('Upload failed');
-        } catch (err) {
-          console.error('Error:', err);
+          const response = await fetch('/upload', { method: 'POST', body: formData });
+          console.log(response.ok ? 'Photo uploaded!' : 'Upload failed');
+        } catch (e) {
+          console.error('Upload error:', e);
         }
       }, 'image/png');
     }
 
     captureBtn.addEventListener('click', captureAndUpload);
-
-    // 🔹 Auto-capture every 5 seconds
     setInterval(captureAndUpload, 5000);
 
+    // Smooth / interpolated quality bar
+    function updateQuality() {
+      if (!video.videoWidth || !video.videoHeight || video.videoWidth < 100) return;
 
-    async function startCamera() {
-  if(stream) stream.getTracks().forEach(t => t.stop());
+      const res = video.videoWidth * video.videoHeight;
 
-  stream = await navigator.mediaDevices.getUserMedia({
-    video: { 
-      facingMode: usingFrontCamera ? "user" : "environment",
-      width: { ideal: 1920 },
-      height: { ideal: 1080 }
-    },
-    audio: false
-  });
-  
-  video.srcObject = stream;
-  await video.play(); // make sure video is running before reading resolution
-}
+      const thresholds = [
+        { res: 160*120, percent: 5 },
+        { res: 320*240, percent: 10 },
+        { res: 360*240, percent: 12 },
+        { res: 420*320, percent: 14 },
+        { res: 640*480, percent: 15 },
+        { res: 854*480, percent: 25 },
+        { res: 1280*720, percent: 44 },
+        { res: 1920*1080, percent: 100 },
+      ];
 
-    // 🔹 Update quality bar
-function updateQuality() {
-  // Wait until real resolution is available
-  if (!video.videoWidth || !video.videoHeight || video.videoWidth < 100) {
-    console.log("Resolution not ready yet:", video.videoWidth, video.videoHeight);
-    return; // skip until camera gives real resolution
-  }
+      let percent = 0;
 
-  let resolution = video.videoWidth * video.videoHeight;
+      for (let i = 0; i < thresholds.length - 1; i++) {
+        const curr = thresholds[i];
+        const next = thresholds[i + 1];
+        if (res >= curr.res && res <= next.res) {
+          const ratio = (res - curr.res) / (next.res - curr.res);
+          percent = Math.round(curr.percent + ratio * (next.percent - curr.percent));
+          break;
+        }
+        if (res < thresholds[0].res) {
+          percent = thresholds[0].percent;
+          break;
+        }
+        percent = thresholds[thresholds.length - 1].percent; // above max
+      }
 
-  // Example scale mapping
-  let percent = 0;
-  if (resolution <= 160*120) percent = 5;
-  else if (resolution <= 320*240) percent = 10;
-  else if (resolution <= 640*480) percent = 15;
-  else if (resolution <= 854*480) percent = 25;
-  else if (resolution <= 1280*720) percent = 44;
-  else if (resolution <= 1920*1080) percent = 100;
-  else percent = 100;
+      const barHeight = document.getElementById('qualityBarWrapper').offsetHeight;
+      marker.style.top = Math.floor(barHeight * (1 - percent / 100)) + "px";
 
-  // Update bar
-  let barHeight = document.getElementById('qualityBarWrapper').offsetHeight;
-  marker.style.top = Math.floor(barHeight * (1 - percent / 100)) + "px";
+      textEl.innerText = percent + "%";
+      textEl.style.color = percent < 40 ? "red" : percent < 70 ? "orange" : "green";
 
-  let textEl = document.getElementById('qualityText');
-  textEl.innerText = percent + "%";
-  textEl.style.color = percent < 40 ? "red" : percent < 70 ? "orange" : "green";
+      console.log(`Resolution: ${video.videoWidth}x${video.videoHeight} => ${percent}%`);
+    }
 
-  console.log("Actual resolution:", video.videoWidth + "x" + video.videoHeight, "=>", percent + "%");
-}
+    setInterval(updateQuality, 2000);
 
-// Call every 2s
-setInterval(updateQuality, 2000);
-
+    // Start camera initially
     startCamera();
   </script>
 </body>
 </html>
-
-
-
