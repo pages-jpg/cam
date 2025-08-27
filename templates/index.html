@@ -1,70 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Camera Upload</title>
-  <style>
-    body { font-family: Arial; text-align: center; margin: 20px; }
-    video { width: 300px; height: 400px; border: 1px solid #ccc; border-radius: 8px; }
-    canvas { display: none; }
-    button { margin: 10px; padding: 10px 20px; font-size: 16px; }
-  </style>
+<meta charset="UTF-8">
+<title>Upload</title>
 </head>
 <body>
-  <h1>Camera Upload</h1>
-  <video id="video" autoplay playsinline></video>
-  <br>
-  <button id="flipBtn">Flip Camera</button>
-  <button id="captureBtn">Capture & Upload</button>
-  <canvas id="canvas"></canvas>
-
-  <script>
-    let video = document.getElementById("video");
-    let canvas = document.getElementById("canvas");
-    let currentFacingMode = "environment"; // start with back camera
-
-    async function startCamera() {
-      const constraints = { video: { facingMode: currentFacingMode } };
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
-        video.srcObject = stream;
-      } catch (err) {
-        alert("Cannot access camera: " + err);
-      }
-    }
-
-    document.getElementById("flipBtn").addEventListener("click", () => {
-  currentFacingMode = currentFacingMode === "environment" ? "user" : "environment";
-
-  // Stop previous stream tracks
-  if (video.srcObject) {
-    video.srcObject.getTracks().forEach(track => track.stop());
-  }
-
-  startCamera();
-});
-
-
-    document.getElementById("captureBtn").addEventListener("click", async () => {
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      canvas.getContext("2d").drawImage(video, 0, 0);
-
-      canvas.toBlob(async (blob) => {
-        const formData = new FormData();
-        formData.append("file", blob, "capture.png");
-
-        const res = await fetch("/upload", { method: "POST", body: formData });
-        if (res.ok) {
-        } else {
-          alert("Upload failed!");
-        }
-      }, "image/png");
-    });
-
-    startCamera();
-  </script>
+<h1>Upload File</h1>
+<form method="POST" action="/upload" enctype="multipart/form-data">
+  <input type="file" name="file" required>
+  <button type="submit">Upload</button>
+</form>
 </body>
 </html>
-
-
